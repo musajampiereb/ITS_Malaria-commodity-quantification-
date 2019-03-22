@@ -1,0 +1,411 @@
+#################################################
+#      MRC_Data_science Program                 #
+#    Mathematical Modelling Projects            #
+#################################################
+
+#Trends and seasonalal variation analysis and 
+#mathematical modelling of childhood illnesses in Rwanda from 2012 to 2016
+#Malaria, neumonia and diarrhea among children under five in IMCI program 
+
+IMCI<-read.csv("/Users/ughe-student/Documents/MRC-ITS/ITS/IMCI DATA.csv", header=T )
+
+View(IMCI)
+
+summary(IMCI)
+
+#Create a ts object from Dirrhea bloody dysentery data in the data.frame
+DiarrheaBDts <- ts(IMCI$Diarrhea.bloody..dysentery, 
+                   start=c(2012, 1), end=c(2016, 12), frequency=12)
+DiarrheaBDts
+
+DiarrheaNODts <- ts(IMCI$Diarrhea.no.dehydration, 
+                    start=c(2012, 1), end=c(2016, 12), frequency=12)
+DiarrheaNODts
+
+DiarrheaPHIVNegts <- ts(IMCI$Diarrhea.persistent..HIVnegative, 
+                        start=c(2012, 1), end=c(2016, 12), frequency=12)
+DiarrheaPHIVNegts
+
+#Create a ts object from pneumonia data in the data.frame
+summary(IMCI)
+Pneumoniats <- ts(IMCI$Pneumonia.IMCI, start=c(2012, 1), end=c(2016, 12), frequency=12)
+Pneumoniats
+class(Pneumoniats)
+Pneumoniasvrts <- ts(IMCI$Pneumonia.severe.or.very.severe.respiratory.disease, 
+                     start=c(2012, 1), end=c(2016, 12), frequency=12)
+Pneumoniasvrts
+#Create a ts object from malaria data in the data.frame
+summary(IMCI)
+Malariasmplts <- ts(IMCI$Malaria.simple_confirmed.IMCI, 
+                    start=c(2012, 1), end=c(2016, 12), frequency=12)
+Malariasmplts
+
+Malariasvrts <- ts(IMCI$Malaria.severe_confirmed.IMCI, 
+                   start=c(2012, 1), end=c(2016, 12), frequency=12)
+Malariasvrts
+
+#EXploratory data analysis
+par(mfrow=c(1,2)) #this puts 2 graphs on one page, in one row, 2 columns
+
+#Create a histogram and boxplot for the malaria data
+
+x <- Malariasmplts 
+h<-hist(x, breaks=10, xlab="Malaria case numbers", 
+        main="Comfirmed malaria distribution") #Malaria data is not normally distributed
+xfit<-seq(min(x),max(x),length=40) 
+yfit<-dnorm(xfit,mean=mean(x),sd=sd(x)) 
+yfit <- yfit*diff(h$mids[1:2])*length(x) 
+lines(xfit, yfit, col="blue", lwd=2)
+
+boxplot(Malariasmplts, xlab="Malaria case numbers", 
+        main="Comfirmed malaria distribution")
+
+#Create a histogram and boxplot for the pneumonia data
+
+x <- Pneumoniats 
+h<-hist(x, breaks=10, xlab="Pneumonia case numbers", 
+        main="Comfirmed Pneumonia distribution (2012-2016)") #Pneumonia data is normally distributed (symetrical)
+xfit<-seq(min(x),max(x),length=40) 
+yfit<-dnorm(xfit,mean=mean(x),sd=sd(x)) 
+yfit <- yfit*diff(h$mids[1:2])*length(x) 
+lines(xfit, yfit, col="blue", lwd=2)
+
+boxplot(Pneumoniats,notche=T, xlab="Pneumonia case numbers",
+        main="Comfirmed pneumonia distribution")
+
+
+#Create a histogram and boxplot for the bloody disentery data
+
+x <- DiarrheaBDts 
+h<-hist(x, breaks=10, xlab="Disentery case numbers", 
+        main="Bloody disenetery distribution (2012-2016)") #Desentery data is normally distributed (symetrical)
+xfit<-seq(min(x),max(x),length=40) 
+yfit<-dnorm(xfit,mean=mean(x),sd=sd(x)) 
+yfit <- yfit*diff(h$mids[1:2])*length(x) 
+lines(xfit, yfit, col="blue", lwd=2)
+
+boxplot(DiarrheaBDts, xlab="Bloody disentery case numbers", 
+        main="Bloody disentery distribution")
+
+#Does the avarege morbidity appear to have chenged over time(Years)? 
+#We will need to view the data on anual basis
+
+library(lattice)
+
+#Starting by malaria data then Pneumonia
+#Anaual Malaria data analysis
+histogram(~IMCI$Malaria.simple_confirmed.IMCI|as.factor(Year), data=IMCI)
+summary(Malariasmplts)
+par(mfrow=c(1,2))
+plot(IMCI$Year, IMCI$Malaria.simple_confirmed.IMCI)
+plot(as.factor(IMCI$Year), IMCI$Malaria.simple_confirmed.IMCI)
+
+#Anaual Pneumonia data analysis
+histogram(~IMCI$Pneumonia.IMCI|as.factor(Year), data=IMCI)
+par(mfrow=c(1,2))
+plot(IMCI$Year, IMCI$Pneumonia.IMCI)
+plot(as.factor(IMCI$Year), IMCI$Pneumonia.IMCI)
+
+#Anaual bloody disentery data analysis
+histogram(~IMCI$Diarrhea.bloody..dysentery.IMCI|as.factor(Year), data=IMCI)
+par(mfrow=c(1,2))
+plot(IMCI$Year, IMCI$Diarrhea.bloody..dysentery.IMCI)
+plot(as.factor(IMCI$Year), IMCI$Diarrhea.bloody..dysentery.IMCI)
+
+# Estimating the average
+mean(IMCI$Pneumonia.IMCI, na.rm=T)
+mean(IMCI$Malaria.simple_confirmed.IMCI, na.rm=T)
+#Anual means for Pneumonia data
+newIMCI_Pneumonia <- data.frame(IMCI$Pneumonia.IMCI, IMCI$Year)
+newIMCI_Pneumonia <- na.omit(newIMCI_Pneumonia)
+tapply(newIMCI_Pneumonia$IMCI.Pneumonia.IMCI, 
+       newIMCI_Pneumonia$IMCI.Year, mean)
+#Anual means for Malaria data
+newIMCI_Malaria <- data.frame(IMCI$Malaria.simple_confirmed.IMCI, IMCI$Year)
+newIMCI_Malaria <- na.omit(newIMCI_Malaria)
+tapply(newIMCI_Malaria$IMCI.Malaria.simple_confirmed.IMCI, 
+       newIMCI_Malaria$IMCI.Year, mean)
+
+#Estimating the median
+median(IMCI$Pneumonia.IMCI, na.rm=T)
+median(IMCI$Malaria.simple_confirmed.IMCI, na.rm=T)
+tapply(newIMCI_Pneumonia$IMCI.Pneumonia.IMCI, newIMCI_Pneumonia$IMCI.Year, summary)
+tapply(newIMCI_Malaria$IMCI.Malaria.simple_confirmed.IMCI, newIMCI_Malaria$IMCI.Year, summary)
+
+#Plot diarrheal seasonal patterns
+layout(1:3)
+par(mar = rep(2, 4))
+boxplot(DiarrheaBDts~cycle(DiarrheaBDts), xlab="Time (Months)", 
+        main="diarrhea with bloody disentery")
+boxplot(DiarrheaNODts~cycle(DiarrheaNODts), xlab="Time (Months)", 
+        main="Diarrhea with no dehydration, ")
+boxplot(DiarrheaPHIVNegts~cycle(DiarrheaPHIVNegts), 
+        ylim=c(0,max(DiarrheaPHIVNegts)+10),
+        xlab="Time (Months)", main="Persistent DIarrhea when HIV Negative")
+
+
+
+#Plot respiratory dieases seasonal patterns
+layout(1:2)
+boxplot(Pneumoniats~cycle(Pneumoniats), xlab="Time (Months)", 
+        main="Pneumonia")
+boxplot(Pneumoniasvrts~cycle(Pneumoniasvrts), xlab="Time (Months)", 
+        main="Severe respiratory diseases, ")
+
+
+#Plot malaria seasonal patterns
+layout(1:2)
+boxplot(Malariasmplts~cycle(Malariasmplts), xlab="Time (Months)", 
+        main="Comfirmed Simple Malaria")
+boxplot(Malariasvrts~cycle(Malariasvrts), xlab="Time (Months)", 
+        main="Comfirmed Severe Malaria, ")
+
+#PLotting the trend of diarrheal diaseases
+layout(1:3)
+plot(DiarrheaBDts, ylab = "Diarrhea with bloody disentery")
+plot(DiarrheaNODts, ylab = "Diarrhea with no disentery")
+plot(DiarrheaPHIVNegts, ylab = "Persistent Diarrhea among HIV Negative Children ")
+
+#PLotting the trend of diarrheal diaseases after removing the seasonal variations
+
+layout(1:3)
+plot(aggregate(DiarrheaBDts), ylab = "Diarrhea with bloody disentery")
+plot(aggregate(DiarrheaNODts), ylab = "Diarrhea with no disentery")
+plot(aggregate(DiarrheaPHIVNegts), ylab = "Persistent Diarrhea among HIV Negative Children ")
+
+#PLotting the trend of pneumonia
+layout(1:2)
+plot(Pneumoniats, ylab = "mild neumonia")
+plot(Pneumoniasvrts, ylab = "severe neumonia")
+
+
+#PLotting the trend of diarrheal diaseases after removing the seasonal variations
+
+layout(1:2)
+plot(aggregate(Pneumoniats), ylab = "mild neumonia")
+plot(aggregate(Pneumoniasvrts), ylab = "severe neumonia")
+
+#PLotting malaria trend 
+layout(1:2)
+plot(Malariasmplts, ylab = "mild malaria")
+plot(Malariasvrts, ylab = "severe malaria")
+
+
+#PLotting the trend of malaria after removing the seasonal variations
+
+layout(1:2)
+plot(aggregate(Malariasmplts), ylab = "mild malaria")
+plot(aggregate(Malariasvrts), ylab = "severe malaria")
+
+par(mfrow=c(1, 1))
+plot(DiarrheaNODts, plot.type="s")
+plot(Malariasmplts)
+
+#Association between pneumonia and malaria patterns 
+summary(IMCI)
+library(car)
+scatterplotMatrix(~ Pneumonia.IMCI + Pneumonia.severe.or.very.severe.respiratory.disease + 
+                    Malaria.simple_confirmed.IMCI + 
+                    Malaria.severe_confirmed.IMCI, data=IMCI, spread=FALSE,
+                  lty.smooth=2, main="Relationship between pneumonia and malaria")
+
+cor(IMCI$Pneumonia.IMCI, IMCI$Malaria.simple_confirmed.IMCI)
+
+
+#Decompose pneumonia and malaria series in their components (trend, seasonality and irregularity)
+plot(decompose(Malariasmplts))
+Malaria.decom <- decompose(Malariasmplts, type = "mult")
+Malaria.decom #The highest peak for seasonal variation is in Dec-Jan and May-June while trough is in Aug-Sept
+plot(Malaria.decom)
+Trend <- Malaria.decom$trend
+Seasonal <- Malaria.decom$seasonal
+ts.plot(cbind(Trend, Trend * Seasonal), lty = 1:2)
+
+plot(decompose(Pneumoniats))
+Pneumonia.decom <- decompose(Pneumoniats, type = "mult")
+Pneumonia.decom #The highest peak is in May for seasonal variation and trough in August-September
+plot(Pneumonia.decom)
+Trend <- Malaria.decom$trend
+Seasonal <- Pneumonia.decom$seasonal
+ts.plot(cbind(Trend, Trend * Seasonal), lty = 1:2)
+
+#Calculate the covariance
+x <- IMCI$Pneumonia.IMCI; y <- IMCI$Malaria.simple_confirmed.IMCI; n <- length(x)
+sum((x - mean(x))*(y - mean(y))) / (n - 1)
+mean((x - mean(x)) * (y - mean(y)))
+cov(x, y)
+cor(x,y)
+
+#Check autocorrelation
+acf(Pneumoniats)
+acf(Malariasmplts)
+
+#Four-year-ahead forecasts for the Pneumonia data based on Holt???Winters filtering
+Pneumonia.hw <- HoltWinters(Pneumoniats, seasonal = "mult")
+plot(Pneumonia.hw)
+
+Pneumonia.predict <- predict(Pneumonia.hw, n.ahead = 4 * 12)
+ts.plot(Pneumoniats, Pneumonia.predict, lty = 1:2)
+
+#Four-year-ahead forecasts for the Pneumonia data based on Holt???Winters filtering
+Malaria.hw <- HoltWinters(Malariasmplts, seasonal = "mult")
+plot(Malaria.hw)
+
+Malaria.hw
+Malaria.hw$SSE
+
+Malaria.predict <- predict(Malaria.hw, n.ahead = 4 * 12)
+ts.plot(Malariasmplts, Malaria.predict, lty = 1:2)
+
+Malaria.predict
+Malariaseasonallyadjusted <- Malariasmplts - Malaria.decom$seasonal
+plot(Malariaseasonallyadjusted)
+
+Malariaforecasts <- HoltWinters(Malariasmplts, beta=FALSE, gamma=FALSE)
+Malariaforecasts
+Malariaforecasts$fitted
+
+plot(Malariaforecasts)
+Malariaforecasts$SSE
+
+library("forecast")
+
+Malariaforecasts2 <- forecast.HoltWinters(Malariaforecasts, h=8)
+plot.forecast(Malariaforecasts2)
+Malariaforecasts2
+
+#Holt's Exponential Smoothing
+logMalaria <- log(Malariasmplts)
+Malariaforecasts <- HoltWinters(logMalaria)
+Malariaforecasts
+
+Malariaforecasts$SSE
+plot(Malariaforecasts)
+
+
+Malariaforecasts2 <- forecast.HoltWinters(Malariaforecasts, h=48)
+plot.forecast(Malariaforecasts2)
+Malariaforecasts2
+
+#Check whether this model cab improved upon
+acf(Malariaforecasts2$residuals, lag.max=10)
+Box.test(Malariaforecasts2$residuals, lag=10, type="Ljung-Box")
+plot.ts(Malariaforecasts2$residuals)
+
+plotForecastErrors <- function(forecasterrors)
+{
+  # make a red histogram of the forecast errors:
+  mybinsize <- IQR(forecasterrors)/4
+  mysd    <- sd(forecasterrors)
+  mymin   <- min(forecasterrors) + mysd*5
+  mymax   <- max(forecasterrors) + mysd*3
+  mybins <- seq(mymin, mymax, mybinsize)
+  hist(forecasterrors, col="red", freq=FALSE, breaks=mybins)
+  # freq=FALSE ensures the area under the histogram = 1  
+  # generate normally distributed data with mean 0 and standard deviation mysd
+  mynorm <- rnorm(10000, mean=0, sd=mysd)
+  myhist <- hist(mynorm, plot=FALSE, breaks=mybins)
+  # plot the normal curve as a blue line on top of the histogram of forecast errors:
+  points(myhist$mids, myhist$density, type="l", col="blue", lwd=2)
+}
+
+
+plotForecastErrors(Malariaforecasts2$residuals)
+#Logarythmic transformations
+Malariasmplts
+plot(Malariasmplts)
+plot(log(Malariasmplts))
+SIN <- COS <- matrix(nr = length(Malariasmplts), nc = 6)
+for (i in 1:6) {
+  SIN[, i] <- sin(2 * pi * i * time(Malariasmplts))
+  COS[, i] <- cos(2 * pi * i * time(Malariasmplts))
+}
+TIME <- (time(Malariasmplts) - mean(time(Malariasmplts)))/sd(time(Malariasmplts))
+mean(time(Malariasmplts))
+sd(time(Malariasmplts))
+
+Malaria.lm1 <- lm(log(Malariasmplts) ~ TIME + I(TIME^2) + I(TIME^3) + I(TIME^4) +
+                    SIN[,1] + COS[,1] + SIN[,2] + COS[,2] + SIN[,3] + COS[,3] +
+                    SIN[,4] + COS[,4] + SIN[,5] + COS[,5] + SIN[,6] + COS[,6])
+coef(Malaria.lm1)/sqrt(diag(vcov(Malaria.lm1)))
+
+
+summary(Malaria.lm1)
+
+Malaria.lm2 <- lm(log(Malariasmplts) ~ TIME + I(TIME^2) + SIN[,1] + COS[,1] +
+                    SIN[,2] + COS[,2] + SIN[,3] + SIN[,4] + COS[,4] + SIN[,5])
+
+coef(Malaria.lm2)/sqrt(diag(vcov(Malaria.lm2)))
+
+AIC(Malaria.lm1)
+AIC(Malaria.lm2)
+acf(resid(Malaria.lm2))
+acf(resid(Malaria.lm1))
+
+#Try generalized linear models
+library("nlme")
+Malaria.gls <- gls(log(Malariasmplts) ~ TIME + I(TIME^2) + SIN[,1] + COS[,1] +
+                     SIN[,2] + COS[,2] + SIN[,3] + SIN[,4] + COS[,4] + SIN[,5],
+                   cor = corAR1(0.6))
+coef(Malaria.gls)/sqrt(diag(vcov(Malaria.gls)))
+
+Malaria.ar <- ar(resid(Malaria.lm2), order = 1, method = "mle")
+Malaria.ar$ar
+
+acf(Malaria.ar$res[-1])
+
+#FOrcasting in 5 years based on the logarythmic model
+
+new.t <- time(ts(start = 2016, end = c(2020, 12), fr = 12))
+TIME <- (new.t - mean(time(Malariasmplts)))/sd(time(Malariasmplts))
+SIN <- COS <- matrix(nr = length(new.t), nc = 6)
+for (i in 1:6) {
+  COS[, i] <- cos(2 * pi * i * new.t)
+  SIN[, i] <- sin(2 * pi * i * new.t)
+}
+SIN <- SIN[, -6]
+new.dat <- data.frame(TIME = as.vector(TIME), SIN = SIN,
+                      COS = COS)
+Malaria.pred.ts <- exp(ts(predict(Malaria.lm2, new.dat), st = 2016,
+                          fr = 12))
+ts.plot(log(Malariasmplts), log(Malaria.pred.ts), lty = 1:2)
+ts.plot(Malariasmplts, Malaria.pred.ts, lty = 1:2)
+
+
+#END
+
+
+
+#Plotting all time series in one plot
+myts1 <- ts(IMCI, start=c(2012, 1), end=c(2016, 12), frequency=12)
+myts1
+plot(myts1, plot.type = "s", col=c("blue", "red", "green"), lty=1:2)
+legend(1995, 45, legend=c("Pneumonia","Malaria", "DIarrhea"), col=c("blue", "red", "green"),lty=1:2) 
+
+layout(1:2)
+boxplot(myts1~cycle(myts1))
+plot(aggregate(myts1))
+
+myts2 <- ts(MCI$Malaria.simple_confirmed.IMCI, start=c(2012, 1), end=c(2016, 12), frequency=12)
+myts1$Pneumonia.IMCI
+plot(myts2)
+
+par(mfrow=c(1,2))
+plot(Year,Pneumonia.IMCI)
+layout(1:2)
+boxplot(myts2~cycle(myts2))
+plot(aggregate(myts2))
+
+myts3 <- ts(MCI$Malaria.severe_confirmed.IMCI, start=c(2012, 1), end=c(2016, 12), frequency=12)
+myts3
+plot(myts3)
+layout(1:2)
+boxplot(myts3~cycle(myts3))
+plot(aggregate(myts3))
+
+myts4 <- ts(MCI$Diarrhea.bloody..dysentery.IMCI, start=c(2012, 1), end=c(2016, 12), frequency=12)
+myts4
+plot(myts4)
+layout(1:2)
+boxplot(myts3~cycle(myts3))
+plot(aggregate(myts3))
